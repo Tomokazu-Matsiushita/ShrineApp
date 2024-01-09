@@ -89,7 +89,7 @@ def fetch_url():
         return jsonify({'error': 'Failed to fetch the page'}), 500
 
     # OpenAI API call to summarize the text
-    openai.api_key = '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'
+    openai.api_key = 'YOUR　API　KEY'
     response = openai.Completion.create(
         engine="text-davinci-002",
         prompt="Summarize the following text:\n\n" + text,
