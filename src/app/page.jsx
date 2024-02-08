@@ -3,37 +3,19 @@
 import React, { useState } from 'react';
 import TempleSearch from '/Users/tomokazumatsushita/Temple_Shrine_App/my-app/src/components/TempleSearch.jsx';
 import axios from 'axios';
-import myLocalImage from './IMG_3086.jpg'; // Importing local image with relative path
+// import myLocalImage from './IMG_3086.jpg'; // Importing local image with relative path
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const Page = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [title, setTitle] = useState('');
-
-  const searchTitle = async (title) => {
-    const response = await fetch(`/search?title=${encodeURIComponent(title)}`);
-    const data = await response.json();
-    if (response.ok) {
-      // Hrefを取得してfetch_urlに渡す
-      readAloud(data.href);
-    } else {
-      // エラーハンドリング
-      console.error('Error:', data.error);
-    }
-  };
-
-  const [duration, setDuration] = useState(1); // Default to 1 minute
-
-  const handleSliderChange = (event) => {
-    setDuration(event.target.value);
-  };
-
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [language, setLanguage] = useState('ja'); // Default to Japanese
+  const [duration, setDuration] = useState(0);
 
   const handleSearch = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/search?title=${encodeURIComponent(title)}`);
+      const response = await fetch(`http://127.0.0.1:5000/search?title=${encodeURIComponent(title)}&lang=${language}`);
       const data = await response.json();
       if (Array.isArray(data)) {
         setSearchResults(data);
@@ -55,6 +37,17 @@ const Page = () => {
 
   const stopReading = () => {
     window.speechSynthesis.cancel();
+  };
+
+  const handleSliderChange = (event) => {
+    setDuration(event.target.value);
+  };
+
+  // テキストの読み上げ時間を計算する関数
+   const calculateReadAloudDuration = (text) => {
+    const charactersPerMinute = 400; // 1分あたりの平均文字数
+    const numberOfCharacters = text.length;
+    return numberOfCharacters / charactersPerMinute;
   };
 
   return (
@@ -88,51 +81,36 @@ const Page = () => {
         </div>
       </div>
       {/* publicフォルダ内の画像を使用する場合 */}
-      <div className="carousel rounded-box">
-        <div className="carousel-item">
-          <img src="https://daisyui.com/images/stock/photo-1559703248-dcaaec9fab78.jpg" alt="Burger" />
-        </div> 
-        <div className="carousel-item">
-          <img src="https://daisyui.com/images/stock/photo-1565098772267-60af42b81ef2.jpg" alt="Burger" />
-        </div> 
-        <div className="carousel-item">
-          <img src="https://daisyui.com/images/stock/photo-1572635148818-ef6fd45eb394.jpg" alt="Burger" />
-        </div> 
-        <div className="carousel-item">
-          <img src="https://daisyui.com/images/stock/photo-1494253109108-2e30c049369b.jpg" alt="Burger" />
-        </div> 
-        <div className="carousel-item">
-          <img src="https://daisyui.com/images/stock/photo-1550258987-190a2d41a8ba.jpg" alt="Burger" />
-        </div> 
-        <div className="carousel-item">
-          <img src="https://daisyui.com/images/stock/photo-1559181567-c3190ca9959b.jpg" alt="Burger" />
-        </div> 
-        <div className="carousel-item">
-          <img src="https://daisyui.com/images/stock/photo-1601004890684-d8cbf643f5f2.jpg" alt="Burger" />
-        </div>
+      {/* <div className="rounded-box" style={{ marginTop: '4rem' }}> */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}> 
+        <img src="https://cdn.pixabay.com/photo/2017/01/13/08/08/tori-1976609_1280.jpg" className="rounded-lg" alt="building" style={{ width: '50%', height: 'auto' }}/>
       </div>
+      {/* </div> */}
       <div className="form-control">
         <label className="label">
-          <span className="label-text">Temple/Shrine</span>
+          <span className="label-text mx-5">Shrine</span>
         </label>
-        <input type="text" placeholder="Type here" className="input input-bordered" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <button className="btn" onClick={handleSearch}>Search</button>
+        <input type="text" placeholder="Type here" className="input input-bordered mx-5 mb-2" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <button className="btn mx-4 my-2" onClick={handleSearch}>Search</button>
       </div>
       <div className="search-results">
         {/* ... existing search results list ... */}
-        <input type="range" min={0} max="30" value={duration} className="range range-accent" onChange={handleSliderChange}/>
-        <span>{duration} minute(s)</span>
+        <input type="range" min={0} max="30" value={duration} className="range range-accent m-5 range-xs" onChange={handleSliderChange}/>
+        <span className='m-5'>{duration} minute(s)</span>
         <ul>
-          {searchResults.map((result) => (
+          {searchResults.map((result) => {
+            const maxDuration = calculateReadAloudDuration(result.Content);
+            return (
             <li key={result.Href}>
-              <p className="flex justify-center w-full">{result.Title}</p>
+              <p className="flex justify-center w-full">{result.Title} (Max duration: {maxDuration.toFixed(2)} minutes)</p>
               <div className="flex justify-center w-full">
                 <button className="btn btn-active btn-sm" onClick={() => readAloud(result.Content)}>Start</button>
                 <div className="divider">or</div>
                 <button className="btn btn-active btn-neutral btn-sm" onClick={stopReading}>Stop</button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </div>
       <footer className="footer p-10 bg-neutral text-neutral-content bottom-0 w-full">
@@ -162,4 +140,3 @@ const Page = () => {
 };
 
 export default Page;
-
